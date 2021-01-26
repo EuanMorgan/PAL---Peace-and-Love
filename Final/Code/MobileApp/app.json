@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Peace and Love",
+    "slug": "PAL",
+    "privacy": "public",
+    "sdkVersion": "36.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/palicon.png",
+    "splash": {
+      "image": "./assets/palsplash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#1b1a28"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "description": "Walking home late at night? You sound like you're in need of a PAL! We use the latest crime data to calculate you the statistically safest route home. We also monitor your device location to respond to any potentially malicous deviation from the path, and the accelerometer to detect a potential attack. If we do detect anything spooky we automatically start a call and record audio and video in the background to keep you safe. Download PAL today and embrace Peace and Love <3"
+  }
+}

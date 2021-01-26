@@ -1,0 +1,177 @@
+<!-- How to make a heat map!
+** Set up the web map **
+1. Create an HTML document with references to Mapbox GL JS in the <head> tags.
+2. Between the <head> tags, add CSS styling for your map.
+3. Create a map div container between your <body> tags. This will hold your map on the page.
+4. Paste your access token (Found by going through Studio > Account > Access Token).
+5. Between <script> tags, declare a map variable.
+6. In your map variable, you can set the container, style, center and zoom.
+** Add data to map **
+1. Use the .on function to initiate an event listener for 'load', then give it a function to fire
+2. Add the data source with .addSource(). Declare an id, type and path.
+3. Add the source to the map as a layer using .addLayer(). Declare the id, type, source, zoom and details.
+4. Add a JSON to "paint" to adjust heat map and circle properties. Add stops for zoom adjustments.
+5. Write where this layer will be by adding the layer that will go just below it.
+** Add pop-up **
+1. Use .on again to listen for 'click' on the specified type 'trees-point'.
+2. When this occurs, a function will create a new pop-up using: new mapboxgl.Popup().
+3. Set properties to the map, such as its coordinates and HTML styling
+4. Add the pop-up to the map with .addTo(map).
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' /> <!-- Alphabet characterset. -->
+    <title></title> <!-- Appears on the tab. -->
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <!-- These add Mapbox GL JS to the document. -->
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- This is CSS (Cascade Style Sheet) styling, which styles your web page by tags, classes and ids. -->
+    <style>
+        body { margin:0; padding:0; } /* The body will take up the entire page. */
+        #map { position:absolute; top:0; bottom:0; width:100%; } /* The map class will take up the entire space. */
+    </style>
+</head>
+<body>
+
+<!-- This is the map class, as referred to earlier as #map. -->
+<div id='map'></div> 
+
+<script>
+
+    /* The access token is like a permission code to access your maps. */
+    /* Enter your public key (Studio > Account > Keys) to display your maps created in Studio. */
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWJpZGlzIiwiYSI6ImNrNzNqOHBndzBjaTEzZ3QwOTZscjhzZ2wifQ.EQ795_PA-n_W-pq3Kl6sUw';
+
+    var map = new mapboxgl.Map({
+        container: 'map', /* Container id */
+        style: 'mapbox://styles/mapbox/dark-v9', /* Link to the Mapbox Studio styled map. */
+        center: [-3.18, 51.48], /* The coordinates for the center of the map when it loads. */
+        zoom: 11 /* The zoom level at which the map will load. */
+    });
+
+    /* .on adds a listener for events to occur upon load. The function is called when the event is fired. */
+    map.on('load', function() {
+
+        /* Adds a source to the map's style. First parameter ('trees') is an id...*/
+        map.addSource('trees', {
+            /* ...the second parameter is the source. */
+            "type": "geojson", /* Type of data. */
+            "data": "crimes.geojson" /* Path to the data. */
+        });
+
+        /* Adds a Mapbox style layer to the map. */
+        /* The format of this code is a JSON (JavaScript Object Notation). Think of it like an address book,
+         * where you have contacts ( eg 'heatmap-weight) and information about them, like phone number
+         * ('property'), e-mail ('type'), etc. */
+        map.addLayer({
+            "id": "trees-heat", /* Reference id. */
+            "type": "heatmap", /* Type of layer being created. */
+            "source": "trees", /* Source of the layer's data, as referred to above in addSource() */
+            "maxzoom": 15, /* Maximum zoom level for this layer. If exceeded, this layer will not be displayed. */
+            "paint": {
+              /* Increase weight as diameter breast height increases. */
+                "heatmap-weight": {
+                    "property": "dbh",
+                    "type": "exponential",
+                    "stops": [
+                        [1, 0],
+                        [62, 1]
+                    ]
+                },
+              /* Increase intensity as zoom level increases. */
+                "heatmap-intensity": {
+                    "stops": [
+                        [11, 1],
+                        [15, 3]
+                    ]
+                },
+              /* Use sequential color palette to use exponentially as the weight increases. */
+                "heatmap-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+                    0, "rgba(255,0,0,0)",
+                    0.2, "rgba(112,247,54,0.6)",
+                    0.4, "rgba(255,249,64,0.6)",
+                    0.6, "rgba(255,125,38,0.6)",
+                    0.8, "rgba(255,0,0,0.4)"
+                ],
+                /* Increase radius as zoom increases. */
+                "heatmap-radius": {
+                    "stops": [
+                        [11, 15],
+                        [15, 20]
+                    ]
+                },
+                /* Decrease opacity to transition into the circle layer. */
+                "heatmap-opacity": {
+                    "default": 0.5,
+                    "stops": [
+                        [14, 1],
+                        [15, 0]
+                    ]
+                },
+            }
+        }, 'waterway-label'); /* The layer just described will go above the waterway-label. */
+
+        /* When zoomed in closely, the heat map disperses into points. This is the layer for points. */
+        map.addLayer({
+            "id": "trees-point",
+            "type": "circle",
+            "source": "trees",
+            "minzoom": 14,
+            "paint": {
+              /* Increase the radius of the circle as the zoom level and dbh value increases.
+                The following three categories attribute different properties to the circles and zoom. */
+                "circle-radius": {
+                    "property": "dbh",
+                    "type": "exponential",
+                    "stops": [
+                        [{ zoom: 15, value: 1 }, 5],
+                        [{ zoom: 15, value: 62 }, 10],
+                        [{ zoom: 22, value: 1 }, 20],
+                        [{ zoom: 22, value: 62 }, 50],
+                    ]
+                },
+                "circle-color": {
+                    "property": "dbh",
+                    "type": "exponential",
+                    "stops": [
+                      [0, "rgba(236,222,239,0)"],
+                      [10, "rgb(236,222,239)"],
+                      [20, "rgb(208,209,230)"],
+                      [30, "rgb(166,189,219)"],
+                      [40, "rgb(103,169,207)"],
+                      [50, "rgb(28,144,153)"],
+                      [60, "rgb(1,108,89)"]
+                    ]
+                },
+                "circle-stroke-color": "white",
+                "circle-stroke-width": 1,
+                "circle-opacity": {
+                    "stops": [
+                        [14, 0],
+                        [15, 1]
+                    ]
+                }
+            }
+        }, 'waterway-label'); /* Goes above the waterway-label. */
+    });
+
+    /* Click on tree to view dbh in a pop-up. */
+    /* Adds a listener for events of a specified type occurring on features in a specified style layer. */
+    map.on('click', 'trees-point', function (e) {
+      new mapboxgl.Popup()
+        .setLngLat(e.features[0].geometry.coordinates) /* Find & set the coordinates for the pop-up. */
+        .setHTML('<b>Details:</b> '+ e.features[0].properties["Crime type"] + ', ' + e.features[0].properties.Location) /* Set and add the HTML to the pop-up. */
+        .addTo(map); /* Add layer to the map. */
+    });
+</script>
+
+</body>
+</html>
